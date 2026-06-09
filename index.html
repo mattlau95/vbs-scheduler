@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<title>Who's free when · VBS Praise 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{ --ink:#1b2420; --muted:#5d6b63; --line:#dfe4df; --page:#eef1ee; --card:#ffffff;
+    --free:#2f8a5f; --freebg:#dbeee3; --partial:#bfe0cd; --faint:#eef4ef; --none:#dde1dd;
+    --clay:#bd6b3c; --claybg:#f6e6da; --amber:#b8881f; }
+  *{box-sizing:border-box;}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--page);
+    margin:0;padding:24px 16px;min-height:100vh;}
+  .wrap{max-width:880px;margin:0 auto;}
+  .toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;}
+  .h1{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:26px;letter-spacing:-0.02em;margin:0;}
+  .sub{color:var(--muted);font-size:13.5px;margin:4px 0 0;max-width:560px;}
+  .status{font-size:11.5px;font-weight:600;border-radius:999px;padding:5px 11px;white-space:nowrap;
+    border:1px solid var(--line);background:#fff;color:var(--muted);cursor:default;}
+  .status.live{color:#1c5638;background:var(--freebg);border-color:#bfe0cd;}
+  .status.snap{color:#8a6a23;background:#f6efda;border-color:#e6dcb8;}
+  .status.refresh{cursor:pointer;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px;}
+  .label{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.04em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 10px;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-size:14px;
+    cursor:pointer;transition:all .12s;font-weight:500;color:var(--ink);}
+  .chip:hover{border-color:var(--free);}
+  .chip.on{background:var(--free);border-color:var(--free);color:#fff;}
+  .chip.sm{padding:5px 11px;font-size:12.5px;}
+  .row{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start;}
+  .miniact{font-size:12.5px;color:var(--free);cursor:pointer;font-weight:600;background:none;border:none;padding:0;}
+  .miniact:hover{text-decoration:underline;}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+  .seg button{border:none;background:#fff;padding:7px 13px;font-size:13px;cursor:pointer;color:var(--muted);font-weight:500;}
+  .seg button.on{background:var(--ink);color:#fff;}
+  .togs{display:flex;flex-direction:column;gap:8px;}
+  .tog{display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer;user-select:none;
+    background:none;border:none;padding:0;color:var(--ink);text-align:left;}
+  .box{width:17px;height:17px;border:1.5px solid var(--line);border-radius:5px;display:inline-flex;
+    align-items:center;justify-content:center;flex:0 0 auto;}
+  .box.on{background:var(--free);border-color:var(--free);color:#fff;font-size:12px;}
+  .summary{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:500;margin:0;}
+  .summary b{color:var(--free);}
+  .day{border-top:1px solid var(--line);padding:14px 0;}
+  .day:first-of-type{border-top:none;}
+  .dayhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:9px;flex-wrap:wrap;}
+  .dname{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;}
+  .dname span{color:var(--muted);font-weight:400;font-size:13px;margin-left:6px;}
+  .pract{font-size:11.5px;color:var(--clay);background:var(--claybg);padding:3px 9px;border-radius:999px;font-weight:600;}
+  .bar{display:flex;gap:2px;height:30px;margin:6px 0;}
+  .cell{flex:1;border-radius:3px;position:relative;}
+  .cell.book::after{content:"";position:absolute;inset:0;border:1.5px solid var(--clay);border-radius:3px;opacity:.85;}
+  .scale{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px;}
+  .wins{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px;}
+  .win{background:var(--freebg);color:#1c5638;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .near{margin-top:8px;font-size:12.5px;color:var(--amber);}
+  .near b{font-weight:600;}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:12px;color:var(--muted);}
+  .lg{display:flex;align-items:center;gap:6px;}
+  .sw{width:14px;height:14px;border-radius:3px;display:inline-block;}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px;}
+  .warn{background:var(--claybg);border:1px solid #e8c9b0;border-radius:10px;padding:11px 14px;font-size:13px;color:#8a4a23;margin-top:14px;}
+  .foot{color:var(--muted);font-size:11.5px;margin-top:18px;line-height:1.5;}
+  @media(max-width:520px){.h1{font-size:22px;}.scale{font-size:8.5px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toprow">
+    <div>
+      <h1 class="h1">Who's free when</h1>
+      <p class="sub">Pick the people you need, and this finds the days and times they're all open — checked against the practices already on the calendar.</p>
+    </div>
+    <div id="status" class="status">Loading…</div>
+  </div>
+  <div id="controls"></div>
+  <div id="results" class="card"><div class="empty">Loading…</div></div>
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+/* ─── CONFIG ───────────────────────────────────────────────────────────────
+   After deploying Code.gs, paste its /exec URL below. Leave ENDPOINT empty to
+   run on the built-in snapshot only. TOKEN must match ACCESS_TOKEN in Code.gs
+   (leave '' if you didn't set one). */
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxCZXht77lyQ2EdgsrIlRYYixAwUUHgYqjxCLva4dL8r9k1LuLixDAm74mydqyPLDcGCQ/exec';   // e.g. 'https://script.google.com/macros/s/AKfyc.../exec'
+const TOKEN    = '';
+/* ──────────────────────────────────────────────────────────────────────── */
+
+const SNAPSHOT = {"people":["Aidan","Alan","Eric","Joanna","Lucas","Matt Sun","Naomi","Nathaniel","Shiloh"],"slots":["10am-11am","11am-12pm","12pm-1pm","1pm-2pm","2pm-3pm","3pm-4pm","4pm-5pm","5pm-6pm","6pm-7pm","7pm-8pm","8pm-9pm","9pm-10pm"],"days":[{"date":"2026-05-31","dow":"Sunday"},{"date":"2026-06-02","dow":"Tuesday"},{"date":"2026-06-03","dow":"Wednesday"},{"date":"2026-06-04","dow":"Thursday"},{"date":"2026-06-07","dow":"Sunday"},{"date":"2026-06-09","dow":"Tuesday"},{"date":"2026-06-10","dow":"Wednesday"},{"date":"2026-06-11","dow":"Thursday"},{"date":"2026-06-12","dow":"Friday"},{"date":"2026-06-13","dow":"Saturday"},{"date":"2026-06-14","dow":"Sunday"},{"date":"2026-06-16","dow":"Tuesday"},{"date":"2026-06-17","dow":"Wednesday"},{"date":"2026-06-18","dow":"Thursday"},{"date":"2026-06-19","dow":"Friday"},{"date":"2026-06-20","dow":"Saturday"},{"date":"2026-06-21","dow":"Sunday"},{"date":"2026-06-22","dow":"Monday"},{"date":"2026-06-23","dow":"Tuesday"},{"date":"2026-06-24","dow":"Wednesday"},{"date":"2026-06-25","dow":"Thursday"},{"date":"2026-06-26","dow":"Friday"},{"date":"2026-06-27","dow":"Saturday"},{"date":"2026-06-28","dow":"Sunday"},{"date":"2026-06-29","dow":"Monday"},{"date":"2026-06-30","dow":"Tuesday"},{"date":"2026-07-01","dow":"Wednesday"},{"date":"2026-07-02","dow":"Thursday"},{"date":"2026-07-03","dow":"Friday"},{"date":"2026-07-04","dow":"Saturday"},{"date":"2026-07-05","dow":"Sunday"},{"date":"2026-07-06","dow":"Monday"},{"date":"2026-07-07","dow":"Tuesday"},{"date":"2026-07-08","dow":"Wednesday"},{"date":"2026-07-09","dow":"Thursday"},{"date":"2026-07-10","dow":"Friday"},{"date":"2026-07-11","dow":"Saturday"},{"date":"2026-07-12","dow":"Sunday"},{"date":"2026-07-13","dow":"Monday"},{"date":"2026-07-14","dow":"Tuesday"},{"date":"2026-07-15","dow":"Wednesday"},{"date":"2026-07-16","dow":"Thursday"},{"date":"2026-07-17","dow":"Friday"},{"date":"2026-07-18","dow":"Saturday"},{"date":"2026-07-19","dow":"Sunday"},{"date":"2026-07-20","dow":"Monday"},{"date":"2026-07-21","dow":"Tuesday"},{"date":"2026-07-22","dow":"Wednesday"},{"date":"2026-07-23","dow":"Thursday"},{"date":"2026-07-24","dow":"Friday"},{"date":"2026-07-25","dow":"Saturday"},{"date":"2026-07-26","dow":"Sunday"},{"date":"2026-07-27","dow":"Monday"},{"date":"2026-07-28","dow":"Tuesday"},{"date":"2026-07-29","dow":"Wednesday"},{"date":"2026-07-30","dow":"Thursday"},{"date":"2026-07-31","dow":"Friday"},{"date":"2026-08-01","dow":"Saturday"}],"avail":{"Aidan":["000000110000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111111","000000111111","000000000000","000000000000","000000111111","000000000000","000000111111","000000000000","000000000000","000000000011","000000000011","111011111111","111011111100","000000000000","000000111000","000000000000","111000000000","111000000010","111011111111","111011111100","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","000000111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000001110000","111000000000","111000000000","111000000000","111011111111","111011111100","000000111111","000000111111","111000000000","111000000011","111000000011","111011111111","111011111100","000010001111"],"Alan":["000000110000","000000000011","000000000000","000000000111","000001111111","000000000011","000000000000","000000000111","000000001100","000000111111","000000111111","000000000011","000000000000","000000000111","000000001100","000111111111","000000000000","000000000000","000000000011","000000000011","000000001111","000000001100","111111111111","000000000000","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000111000","000000000000","000000000011","000000000000","000000000111","000000001100","111111111111","000001110000","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111","000000001111","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111"],"Eric":["000000000000","000000000000","000000000000","000000000000","000001111111","000000000000","000000000000","000000000000","000000111100","000000000000","000000111111","000000000011","000000000011","000000111111","000000111100","000000000000","000000000000","000000000000","000000000011","000000000011","000011111111","000011111100","000000000000","000000111000","111000000000","111000000011","111000000011","111011111111","111011111100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000000000","001000000000","001000000011","001000000011","001011111111","001011111100","001111111011","000001110000","001000000000","001000000011","001000000011","001011111111","001011111100","001111111111","000000111111","000000000000","000000000011","000000000011","000011111111","000011111100","000000000000"],"Joanna":["000000000000","000000000000","000000000011","000000011111","000000000000","000000000011","000000000011","000000111111","000000111100","000000111111","000000111111","000000000011","000000000011","000000000000","000000111000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111000","111000000000","111000000011","111000000011","111011111111","111011111100","111111000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","111111111111","000000111000","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111","000001110000","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111","000000111111","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111"],"Lucas":["000000110000","000000000000","000000000000","000000011110","000001111110","000000000000","000000000000","000000000000","000000111100","000000000000","000000111100","000000000000","000000000000","000000111110","000000111100","000000000000","000000000000","111000000000","111000000000","111000000010","111011111110","111011110000","111111111110","000000111000","111000000000","111000000000","111000000010","111011111110","111011111100","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","111111111110","000000111000","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110","000001110000","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110","000000111110","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110"],"Matt Sun":["000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000010","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000"],"Naomi":["000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111100","000000000000","000000000000","000000000000","000000000000","000000000000","000111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000010","111000000000","111000000000","111111111100","000000000000","000000000000","000000000000","000000000000","000000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100"],"Nathaniel":["000000110000","000000000000","000000000000","000000000000","000001111100","000000000000","000000000000","000000000000","000000001100","000000111100","000000111100","000000000000","000000000000","000000000100","000000000100","000111111100","000000000000","000000000000","000000000000","111000000000","111000001100","111011111100","111111111100","000000111000","000000000000","111000000000","000000000000","000000000100","111000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111100","000000111000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000"],"Shiloh":["000000110000","000000000000","000000000011","000000000111","000001111111","000000000000","000000000011","000000000111","000000111100","000000111111","000000111111","000000000000","000000000011","000000000000","000000000000","000000000000","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111100000","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000111000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000111111","111000000000","111000000000","111000000011","111011000000","111011000000","000000000000"]},"meetings":[{"date":"2026-05-31","label":"Sunday Practice","loc":"Agape","startSlot":6,"endSlot":7},{"date":"2026-06-07","label":"Sunday Practice","loc":"Agape","startSlot":5,"endSlot":6},{"date":"2026-06-14","label":"Sunday Practice","loc":"Agape","startSlot":6,"endSlot":7},{"date":"2026-06-28","label":"Sunday Practice","loc":"","startSlot":6,"endSlot":7},{"date":"2026-07-12","label":"Sunday Practice","loc":"","startSlot":6,"endSlot":8},{"date":"2026-07-19","label":"Sunday Practice","loc":"","startSlot":5,"endSlot":7},{"date":"2026-07-24","label":"Friday Practice","loc":"","startSlot":6,"endSlot":8},{"date":"2026-07-26","label":"Sunday Practice","loc":"","startSlot":5,"endSlot":7},{"date":"2026-07-31","label":"Friday Practice","loc":"","startSlot":5,"endSlot":8},{"date":"2026-08-02","label":"Dry Run","loc":"Charis","startSlot":3,"endSlot":7}]};
+
+const SLOT_START=["10:00 AM","11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM","8:00 PM","9:00 PM"];
+const SLOT_END  =["11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM","8:00 PM","9:00 PM","10:00 PM"];
+const WEEK=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
+let DATA=null, SOURCE="snapshot", GENERATED=null;
+const state={ selected:["Alan","Eric"], minLen:2, hideClash:true, showNearMiss:false, days:WEEK.slice() };
+
+/* normalize either shape (snapshot arrays OR live date-keyed maps) to date->bits */
+function normalize(raw){
+  const byDate={};
+  raw.people.forEach(function(p){
+    const a=raw.avail[p];
+    if(Array.isArray(a)){ const m={}; raw.days.forEach(function(d,i){ m[d.date]=a[i]; }); byDate[p]=m; }
+    else byDate[p]=a||{};
+  });
+  return { people:raw.people, days:raw.days, byDate:byDate, meetings:raw.meetings||SNAPSHOT.meetings };
+}
+
+function bookedSet(date){ const m=DATA.meetings.find(function(x){return x.date===date;}); const s=new Set(); if(m) for(let i=m.startSlot;i<=m.endSlot;i++) s.add(i); return s; }
+function meetingFor(date){ return DATA.meetings.find(function(x){return x.date===date;}); }
+function fmtDate(iso){ const p=iso.split("-").map(Number); const mon=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][p[1]-1]; return mon+" "+p[2]; }
+function ranges(arr,ml){ const out=[]; let i=0; while(i<arr.length){ if(arr[i]){ let j=i; while(j+1<arr.length&&arr[j+1])j++; if(j-i+1>=ml)out.push([i,j]); i=j+1; } else i++; } return out; }
+function bits(p,date){ return (DATA.byDate[p]&&DATA.byDate[p][date])||"000000000000"; }
+function cellColor(frac,all){ if(all)return"var(--free)"; if(frac>=0.5)return"var(--partial)"; if(frac>0)return"var(--faint)"; return"var(--none)"; }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];}); }
+
+function compute(){
+  const N=state.selected.length; if(!N)return[];
+  const rows=[];
+  DATA.days.forEach(function(day){
+    if(state.days.indexOf(day.dow)<0)return;
+    const booked=bookedSet(day.date);
+    const counts=[];
+    for(let s=0;s<12;s++){ let c=0; const miss=[]; state.selected.forEach(function(p){ if(bits(p,day.date)[s]==="1")c++; else miss.push(p); }); counts.push({c:c,miss:miss}); }
+    const allFree=counts.map(function(x,s){ return x.c===N && !(state.hideClash&&booked.has(s)); });
+    const rs=ranges(allFree,state.minLen);
+    const near=N>=2?ranges(counts.map(function(x,s){ return x.c===N-1 && !(state.hideClash&&booked.has(s)) && !allFree[s]; }),state.minLen):[];
+    if(rs.length||(state.showNearMiss&&near.length)) rows.push({day:day,counts:counts,allFree:allFree,ranges:rs,near:near,booked:booked,N:N});
+  });
+  return rows;
+}
+
+function sparseSelected(){
+  return state.selected.filter(function(p){
+    const m=DATA.byDate[p]||{}; let t=0; for(const k in m){ t+=(m[k].match(/1/g)||[]).length; } return t<5;
+  });
+}
+
+function renderControls(){
+  const peopleChips=DATA.people.map(function(p){ return '<button class="chip'+(state.selected.indexOf(p)>=0?' on':'')+'" data-person="'+esc(p)+'">'+esc(p)+'</button>'; }).join("");
+  const dayChips=WEEK.map(function(d){ return '<button class="chip sm'+(state.days.indexOf(d)>=0?' on':'')+'" data-day="'+d+'">'+d.slice(0,3)+'</button>'; }).join("");
+  const mins=[[1,"Any"],[2,"2 hrs"],[3,"3 hrs"],[4,"4+ hrs"]].map(function(o){ return '<button class="'+(state.minLen===o[0]?'on':'')+'" data-min="'+o[0]+'">'+o[1]+'</button>'; }).join("");
+  const tog=function(key,lab){ const on=state[key]; return '<button class="tog" data-tog="'+key+'"><span class="box'+(on?' on':'')+'">'+(on?'✓':'')+'</span>'+lab+'</button>'; };
+  const sp=sparseSelected();
+  const warn=sp.length?'<div class="warn">Heads up: '+sp.join(" and ")+"'s form looks unfilled (almost nothing checked), so results will come back thin while "+(sp.length>1?"they're":"that's")+" included.</div>":"";
+  document.getElementById("controls").innerHTML=
+    '<div class="card">'+
+      '<p class="label">Who needs to be there</p>'+
+      '<div class="chips">'+peopleChips+'</div>'+
+      '<div style="margin-top:10px;display:flex;gap:16px;"><button class="miniact" data-act="all">Select all</button><button class="miniact" data-act="clear">Clear</button></div>'+
+      '<div class="row" style="margin-top:18px;">'+
+        '<div><p class="label">Minimum window</p><div class="seg">'+mins+'</div></div>'+
+        '<div><p class="label">Options</p><div class="togs">'+tog("hideClash","Skip times that clash with a scheduled practice")+tog("showNearMiss","Show near-misses (all but one free)")+'</div></div>'+
+      '</div>'+
+      '<div style="margin-top:18px;"><p class="label">Days to consider</p><div class="chips">'+dayChips+'</div></div>'+
+      warn+
+    '</div>';
+}
+
+function renderResults(){
+  const el=document.getElementById("results");
+  if(!state.selected.length){ el.innerHTML='<div class="empty">Pick at least one person above to see open windows.</div>'; return; }
+  const res=compute();
+  const total=res.reduce(function(a,r){return a+r.ranges.length;},0);
+  let html='<p class="summary"><b>'+total+'</b> open window'+(total===1?'':'s')+' where all '+state.selected.length+' are free <span style="color:var(--muted);font-weight:400;"> · '+esc(state.selected.join(", "))+'</span></p>';
+  if(!res.length) html+='<div class="empty">No shared windows under these settings. Try a shorter minimum window, fewer people, or turn on near-misses.</div>';
+  res.forEach(function(r){
+    const m=meetingFor(r.day.date);
+    html+='<div class="day"><div class="dayhead"><div class="dname">'+r.day.dow+'<span>'+fmtDate(r.day.date)+'</span></div>'+
+      (m?'<span class="pract">Practice '+SLOT_START[m.startSlot]+'–'+SLOT_END[m.endSlot]+(m.loc?' · '+esc(m.loc):'')+'</span>':'')+'</div>';
+    html+='<div class="bar">'+r.counts.map(function(x,s){
+      const t=SLOT_START[s]+'–'+SLOT_END[s]+' — '+x.c+' of '+r.N+' free'+(x.miss.length?' (out: '+x.miss.join(", ")+')':'')+(r.booked.has(s)?' · scheduled practice':'');
+      return '<div class="cell'+(r.booked.has(s)?' book':'')+'" style="background:'+cellColor(x.c/r.N,r.allFree[s])+'" title="'+esc(t)+'"></div>';
+    }).join("")+'</div>';
+    html+='<div class="scale"><span>10a</span><span>1p</span><span>4p</span><span>7p</span><span>10p</span></div>';
+    if(r.ranges.length) html+='<div class="wins">'+r.ranges.map(function(rg){return '<span class="win">'+SLOT_START[rg[0]]+' – '+SLOT_END[rg[1]]+'</span>';}).join("")+'</div>';
+    if(state.showNearMiss) r.near.forEach(function(rg){ const out={}; for(let s=rg[0];s<=rg[1];s++) r.counts[s].miss.forEach(function(p){out[p]=1;}); html+='<div class="near">Near-miss '+SLOT_START[rg[0]]+'–'+SLOT_END[rg[1]]+' — <b>'+esc(Object.keys(out).join(", "))+'</b> can\'t make it</div>'; });
+    html+='</div>';
+  });
+  html+='<div class="legend"><span class="lg"><span class="sw" style="background:var(--free)"></span>All free</span><span class="lg"><span class="sw" style="background:var(--partial)"></span>Most free</span><span class="lg"><span class="sw" style="background:var(--none)"></span>Few / none</span><span class="lg"><span class="sw" style="border:1.5px solid var(--clay);background:#fff"></span>Scheduled practice</span></div>';
+  el.innerHTML=html;
+}
+
+function renderStatus(){
+  const s=document.getElementById("status");
+  if(SOURCE==="live"){ const t=GENERATED?new Date(GENERATED):null; s.className="status live refresh"; s.textContent="● Live"+(t?" · "+t.toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):"")+" · refresh"; s.title="Click to re-read the folder"; }
+  else { s.className="status snap"+(ENDPOINT?" refresh":""); s.textContent=ENDPOINT?"Saved snapshot · couldn't reach Google · retry":"Saved snapshot"; }
+}
+
+function renderFoot(){
+  document.getElementById("foot").innerHTML = (SOURCE==="live"
+    ? "Reading availability live from your Drive folder. "
+    : "Showing the built-in snapshot (May 31 – Aug 1). ")+
+    "Any cell that wasn't a green check — including Church, SGL, holiday, and N/A blocks — counts as \"not free.\"";
+}
+
+function renderAll(){ renderControls(); renderResults(); renderStatus(); renderFoot(); }
+
+document.body.addEventListener("click",function(e){
+  const t=e.target.closest("[data-person],[data-day],[data-min],[data-tog],[data-act],.refresh");
+  if(!t)return;
+  if(t.id==="status"&&t.classList.contains("refresh")){ loadLive(); return; }
+  if(t.dataset.person!=null){ const p=t.dataset.person; const i=state.selected.indexOf(p); if(i>=0)state.selected.splice(i,1); else state.selected.push(p); }
+  else if(t.dataset.day!=null){ const d=t.dataset.day; const i=state.days.indexOf(d); if(i>=0)state.days.splice(i,1); else state.days.push(d); }
+  else if(t.dataset.min!=null){ state.minLen=+t.dataset.min; }
+  else if(t.dataset.tog!=null){ state[t.dataset.tog]=!state[t.dataset.tog]; }
+  else if(t.dataset.act==="all"){ state.selected=DATA.people.slice(); }
+  else if(t.dataset.act==="clear"){ state.selected=[]; }
+  renderControls(); renderResults();
+});
+
+function useData(raw,source){ DATA=normalize(raw); SOURCE=source; GENERATED=raw.generated||null; renderAll(); }
+
+function loadLive(){
+  if(!ENDPOINT){ useData(SNAPSHOT,"snapshot"); return; }
+  const fn="__vbs_cb_"+Date.now();
+  const s=document.createElement("script");
+  let done=false;
+  function cleanup(){ clearTimeout(timer); try{delete window[fn];}catch(_){window[fn]=undefined;} if(s.parentNode)s.parentNode.removeChild(s); }
+  const timer=setTimeout(function(){ if(done)return; done=true; cleanup(); useData(SNAPSHOT,"snapshot"); }, 9000);
+  window[fn]=function(d){ if(done)return; done=true; cleanup(); if(d&&!d.error&&d.people){ useData(d,"live"); } else { useData(SNAPSHOT,"snapshot"); } };
+  let url=ENDPOINT+(ENDPOINT.indexOf("?")>=0?"&":"?")+"callback="+fn;
+  if(TOKEN) url+="&token="+encodeURIComponent(TOKEN);
+  s.src=url; s.onerror=function(){ if(done)return; done=true; cleanup(); useData(SNAPSHOT,"snapshot"); };
+  document.body.appendChild(s);
+}
+
+// boot — show snapshot instantly, then upgrade to live if configured
+useData(SNAPSHOT,"snapshot");
+loadLive();
+</script>
+</body>
+</html>
