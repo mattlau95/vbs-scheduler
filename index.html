@@ -327,20 +327,30 @@ function timeToSlot(t){
 
 function parseSheetCSV(text){
   const lines=text.replace(/\r/g,'').trim().split('\n');
-  if(lines.length<2) return [];
+  if(lines.length<2) return {meetings:[],headers:[]};
   const headers=lines[0].split(',').map(function(h){return h.trim().replace(/^"|"$/g,'').toLowerCase();});
   const meetings=[];
   for(let i=1;i<lines.length;i++){
     const cols=lines[i].split(',').map(function(c){return c.trim().replace(/^"|"$/g,'');});
     const row={};
     headers.forEach(function(h,j){row[h]=cols[j]||'';});
-    if(!row.date) continue;
-    const start=timeToSlot(row.start||row['start time']||row['start slot']);
-    const end=timeToSlot(row.end||row['end time']||row['end slot']);
+    // flexible date key matching
+    const dateVal=row.date||row['practice date']||row['day']||'';
+    if(!dateVal) continue;
+    // flexible start/end key matching
+    const startRaw=row.start||row['start time']||row['start slot']||row['begins']||row['from']||'';
+    const endRaw=row.end||row['end time']||row['end slot']||row['ends']||row['to']||'';
+    const start=timeToSlot(startRaw);
+    const end=timeToSlot(endRaw);
     if(start<0||start>11||end<0||end>11) continue;
-    meetings.push({date:row.date,label:row.label||row.name||'Practice',loc:row.location||row.loc||'',startSlot:start,endSlot:end});
+    meetings.push({
+      date:dateVal,
+      label:row.label||row.name||row.practice||row.type||row.event||'Practice',
+      loc:row.location||row.loc||row.venue||row.church||row.place||'',
+      startSlot:start,endSlot:end
+    });
   }
-  return meetings;
+  return {meetings:meetings,headers:headers};
 }
 
 function loadSheetMeetings(url){
@@ -349,9 +359,12 @@ function loadSheetMeetings(url){
   fetch(normalizeSheetUrl(url))
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status); return r.text();})
     .then(function(text){
-      const meetings=parseSheetCSV(text);
-      if(!meetings.length) throw new Error('No valid rows found. Check column headers: date, label, location, start, end');
-      SHEET_MEETINGS=meetings;
+      const result=parseSheetCSV(text);
+      if(!result.meetings.length){
+        const found=result.headers.length?'Found headers: '+result.headers.join(', ')+'. ':'';
+        throw new Error('No valid rows found. '+found+'Expected: date, label, location, start, end');
+      }
+      SHEET_MEETINGS=result.meetings;
       localStorage.setItem('vbs_sheet_url',url);
       if(DATA){DATA.meetings=SHEET_MEETINGS; renderResults();}
       sheetLoading=false;
