@@ -302,7 +302,10 @@ function renderScheduleView(){
 /* ─── Google Sheet CSV loading ──────────────────────────────────────────── */
 
 function normalizeSheetUrl(url){
-  const idM=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  // Already a CSV URL — pass through unchanged
+  if(url.includes('output=csv')||url.includes('format=csv')) return url;
+  // Regular share/edit URL — convert to export URL (needs 20+ char ID to skip the literal 'e' segment)
+  const idM=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]{20,})/);
   if(!idM) return url;
   const id=idM[1];
   const gidM=url.match(/[?&]gid=(\d+)/);
