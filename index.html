@@ -84,6 +84,14 @@
   .sched-time{font-size:13px;font-variant-numeric:tabular-nums;color:var(--free);font-weight:600;white-space:nowrap;}
   .badge-next{font-size:10.5px;font-weight:700;background:var(--free);color:#fff;border-radius:999px;
     padding:3px 9px;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;}
+  /* attendance */
+  .attend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);width:100%;}
+  .attend-group{display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+  .attend-lbl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);white-space:nowrap;}
+  .achip{font-size:12px;font-weight:500;border-radius:999px;padding:3px 10px;border:1px solid;}
+  .achip.go{background:var(--freebg);color:#1c5638;border-color:var(--partial);}
+  .achip.no{background:#f5f5f5;color:var(--muted);border-color:var(--line);}
+  .attend-nodata{font-size:12px;color:var(--muted);margin-top:8px;width:100%;font-style:italic;}
   /* sheet connect */
   .sheet-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
   .sheet-input{flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;
@@ -250,6 +258,20 @@ function renderFoot(){
 
 /* ─── Schedule view ─────────────────────────────────────────────────────── */
 
+function practiceAttendance(m){
+  const hasData=DATA.days.some(function(d){return d.date===m.date;});
+  if(!hasData) return null;
+  const canGo=[], cantGo=[];
+  DATA.people.forEach(function(p){
+    let free=true;
+    for(let s=m.startSlot;s<=m.endSlot;s++){
+      if(bits(p,m.date)[s]!=='1'){free=false;break;}
+    }
+    if(free) canGo.push(p); else cantGo.push(p);
+  });
+  return {canGo:canGo,cantGo:cantGo};
+}
+
 function renderSchedule(){
   const el=document.getElementById("schedule-list");
   if(!el||!DATA) return;
@@ -263,11 +285,23 @@ function renderSchedule(){
     const isNext=i===nextIdx;
     const dayObj=DATA.days.find(function(d){return d.date===m.date;});
     const dow=dayObj?dayObj.dow:(new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'}));
+    const att=practiceAttendance(m);
+    let attHtml='';
+    if(!att){ attHtml='<p class="attend-nodata">No availability data for this date.</p>'; }
+    else{
+      const goChips=att.canGo.map(function(p){return '<span class="achip go">'+esc(p)+'</span>';}).join('');
+      const noChips=att.cantGo.map(function(p){return '<span class="achip no">'+esc(p)+'</span>';}).join('');
+      attHtml='<div class="attend">'+
+        '<div class="attend-group"><span class="attend-lbl">Can make it</span>'+goChips+'</div>'+
+        (att.cantGo.length?'<div class="attend-group"><span class="attend-lbl">Can\'t make it</span>'+noChips+'</div>':'')+
+        '</div>';
+    }
     html+='<div class="sched-item'+(past?' past':'')+'">'+
       '<div class="sched-date"><span class="sched-dow">'+esc(dow)+'</span><span class="sched-d">'+fmtDate(m.date)+'</span></div>'+
       '<div class="sched-info"><span class="sched-lbl">'+esc(m.label)+'</span>'+(m.loc?'<span class="sched-loc">'+esc(m.loc)+'</span>':'')+'</div>'+
       '<div class="sched-time">'+SLOT_START[m.startSlot]+' – '+SLOT_END[m.endSlot]+'</div>'+
       (isNext?'<span class="badge-next">Next</span>':'')+
+      attHtml+
       '</div>';
   });
   el.innerHTML=html;
@@ -313,16 +347,20 @@ function normalizeSheetUrl(url){
   return 'https://docs.google.com/spreadsheets/d/'+id+'/export?format=csv&gid='+gid;
 }
 
-function timeToSlot(t){
+function timeToSlot(t,isEnd){
   if(!t) return -1;
   t=t.toString().trim().toLowerCase().replace(/\s+/g,'');
   const m=t.match(/^(\d+)(?::(\d+))?(am|pm)?$/);
   if(!m) return -1;
   let h=parseInt(m[1]);
+  const min=m[2]?parseInt(m[2]):0;
   if(m[3]==='pm'&&h<12) h+=12;
   if(m[3]==='am'&&h===12) h=0;
   if(!m[3]&&h<=9) h+=12; // treat bare 1–9 as PM
-  return h-10; // 10am→0, 9pm→11
+  // End times: "6:00 PM" means the practice ends AT 6pm, so the last covered slot
+  // starts at 5pm (slot 7). If there are minutes (e.g. 6:30), extend into the next slot.
+  const slot=h-10;
+  return isEnd?(min===0?slot-1:slot):slot;
 }
 
 function parseCSVRow(line){
@@ -368,8 +406,8 @@ function parseSheetCSV(text){
     if(!dateVal) continue;
     const startRaw=row.start||row['start time']||row['start slot']||row['begins']||row['from']||'';
     const endRaw=row.end||row['end time']||row['end slot']||row['ends']||row['to']||'';
-    const start=timeToSlot(startRaw);
-    const end=timeToSlot(endRaw);
+    const start=timeToSlot(startRaw,false);
+    const end=timeToSlot(endRaw,true);
     if(start<0||start>11||end<0||end>11) continue;
     meetings.push({
       date:dateVal,
