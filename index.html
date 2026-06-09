@@ -5,11 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex,nofollow" />
 <title>Who's free when · VBS Praise 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root{ --ink:#1b2420; --muted:#5d6b63; --line:#dfe4df; --page:#eef1ee; --card:#ffffff;
-    --free:#2f8a5f; --freebg:#dbeee3; --partial:#bfe0cd; --faint:#eef4ef; --none:#dde1dd;
-    --clay:#bd6b3c; --claybg:#f6e6da; --amber:#b8881f; }
+    --free:#2b865b; --freebg:#dbeee3; --partial:#bfe0cd; --faint:#eef4ef; --none:#dde1dd;
+    --clay:#9e5427; --claybg:#f6e6da; --amber:#b8881f; }
   *{box-sizing:border-box;}
   body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);background:var(--page);
     margin:0;padding:24px 16px;min-height:100vh;}
@@ -103,7 +105,10 @@
   .btn-secondary{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px;
     padding:8px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
   .btn-secondary:hover{border-color:var(--muted);}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;}
   .sheet-hint{font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.5;}
+  :focus-visible{outline:2px solid var(--ink);outline-offset:2px;}
+  .chip.on:focus-visible,.btn-primary:focus-visible,.badge-next:focus-visible{outline-color:#fff;}
   .sheet-hint code{background:var(--page);padding:1px 4px;border-radius:4px;font-size:11.5px;}
   .sheet-ok{font-size:12px;color:var(--free);font-weight:600;margin:6px 0 0;}
   .sheet-err{font-size:12px;color:#c0392b;margin:6px 0 0;line-height:1.5;}
@@ -112,29 +117,33 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="toprow">
-    <div>
-      <h1 class="h1">Who's free when</h1>
-      <p class="sub">Pick the people you need, and this finds the days and times they're all open — checked against the practices already on the calendar.</p>
+  <header>
+    <div class="toprow">
+      <div>
+        <h1 class="h1">Who's free when</h1>
+        <p class="sub">Pick the people you need, and this finds the days and times they're all open — checked against the practices already on the calendar.</p>
+      </div>
+      <div id="status" class="status">Loading…</div>
     </div>
-    <div id="status" class="status">Loading…</div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab on" role="tab" aria-selected="true" aria-controls="finder-view" data-tab="finder">Find a Time</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="schedule-view" data-tab="schedule">Current Schedule</button>
   </div>
 
-  <div class="tabs">
-    <button class="tab on" data-tab="finder">Find a Time</button>
-    <button class="tab" data-tab="schedule">Current Schedule</button>
-  </div>
+  <main>
+    <div id="finder-view" role="tabpanel">
+      <div id="controls"></div>
+      <div id="results" class="card"><div class="empty">Loading…</div></div>
+      <p class="foot" id="foot"></p>
+    </div>
 
-  <div id="finder-view">
-    <div id="controls"></div>
-    <div id="results" class="card"><div class="empty">Loading…</div></div>
-    <p class="foot" id="foot"></p>
-  </div>
-
-  <div id="schedule-view" style="display:none">
-    <div id="schedule-list" class="card"></div>
-    <div id="sheet-connect" class="card"></div>
-  </div>
+    <div id="schedule-view" role="tabpanel" style="display:none">
+      <div id="schedule-list" class="card"></div>
+      <div id="sheet-connect" class="card"></div>
+    </div>
+  </main>
 </div>
 
 <script>
@@ -159,6 +168,9 @@ function loadCache(){ try{const s=localStorage.getItem(CACHE_KEY);return s?JSON.
 let SHEET_MEETINGS=null, sheetLoading=false, sheetError='';
 let activeTab='finder';
 const state={ selected:["Alan","Eric"], minLen:2, hideClash:true, showNearMiss:false, days:WEEK.slice() };
+const STATE_KEY='vbs_state';
+function saveState(){ try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(_){} }
+function loadState(){ try{ const o=JSON.parse(localStorage.getItem(STATE_KEY)||'null'); if(!o)return; if(Array.isArray(o.selected))state.selected=o.selected; if(typeof o.minLen==='number')state.minLen=o.minLen; if(typeof o.hideClash==='boolean')state.hideClash=o.hideClash; if(typeof o.showNearMiss==='boolean')state.showNearMiss=o.showNearMiss; if(Array.isArray(o.days))state.days=o.days; }catch(_){} }
 
 /* normalize either shape (snapshot arrays OR live date-keyed maps) to date->bits */
 function normalize(raw){
@@ -202,10 +214,10 @@ function sparseSelected(){
 }
 
 function renderControls(){
-  const peopleChips=DATA.people.map(function(p){ return '<button class="chip'+(state.selected.indexOf(p)>=0?' on':'')+'" data-person="'+esc(p)+'">'+esc(p)+'</button>'; }).join("");
-  const dayChips=WEEK.map(function(d){ return '<button class="chip sm'+(state.days.indexOf(d)>=0?' on':'')+'" data-day="'+d+'">'+d.slice(0,3)+'</button>'; }).join("");
+  const peopleChips=DATA.people.map(function(p){ const on=state.selected.indexOf(p)>=0; return '<button class="chip'+(on?' on':'')+'" data-person="'+esc(p)+'" aria-pressed="'+(on?'true':'false')+'">'+esc(p)+'</button>'; }).join("");
+  const dayChips=WEEK.map(function(d){ const on=state.days.indexOf(d)>=0; return '<button class="chip sm'+(on?' on':'')+'" data-day="'+d+'" aria-pressed="'+(on?'true':'false')+'">'+d.slice(0,3)+'</button>'; }).join("");
   const mins=[[1,"Any"],[2,"2 hrs"],[3,"3 hrs"],[4,"4+ hrs"]].map(function(o){ return '<button class="'+(state.minLen===o[0]?'on':'')+'" data-min="'+o[0]+'">'+o[1]+'</button>'; }).join("");
-  const tog=function(key,lab){ const on=state[key]; return '<button class="tog" data-tog="'+key+'"><span class="box'+(on?' on':'')+'">'+(on?'✓':'')+'</span>'+lab+'</button>'; };
+  const tog=function(key,lab){ const on=state[key]; return '<button class="tog" data-tog="'+key+'" role="checkbox" aria-checked="'+(on?'true':'false')+'"><span class="box'+(on?' on':'')+'">'+(on?'✓':'')+'</span>'+lab+'</button>'; };
   const sp=sparseSelected();
   const warn=sp.length?'<div class="warn">Heads up: '+sp.join(" and ")+"'s form looks unfilled (almost nothing checked), so results will come back thin while "+(sp.length>1?"they're":"that's")+" included.</div>":"";
   document.getElementById("controls").innerHTML=
@@ -320,9 +332,10 @@ function renderSheetConnect(){
   let html='<p class="label">Practice Schedule Source</p>'+
     '<p style="font-size:13px;color:var(--muted);margin:0;">'+
     'Connect a Google Sheet (published as CSV) to keep practices up to date without editing this file.</p>'+
+    '<label for="sheet-url" style="font-size:12px;font-weight:600;color:var(--muted);display:block;margin-top:10px;margin-bottom:4px;">Sheet URL</label>'+
     '<div class="sheet-row">'+
-    '<input id="sheet-url" type="url" class="sheet-input" placeholder="Google Sheets CSV URL" value="'+esc(savedUrl)+'" />'+
-    '<button class="btn-primary" id="sheet-load">'+(sheetLoading?'Loading…':'Load')+'</button>'+
+    '<input id="sheet-url" type="url" class="sheet-input" placeholder="https://docs.google.com/spreadsheets/…" value="'+esc(savedUrl)+'" aria-label="Google Sheets CSV URL" />'+
+    '<button class="btn-primary" id="sheet-load"'+(sheetLoading?' disabled':'')+'>'+( sheetLoading?'Loading…':'Load')+'</button>'+
     (SHEET_MEETINGS?'<button class="btn-secondary" id="sheet-clear">Use Snapshot</button>':'')+
     '</div>'+
     '<p class="sheet-hint">Publish your sheet via <strong>File › Share › Publish to web</strong> (choose CSV), then paste the URL above.<br>'+
@@ -455,7 +468,10 @@ document.querySelector('.tabs').addEventListener('click',function(e){
   const tab=e.target.closest('[data-tab]');
   if(!tab) return;
   activeTab=tab.dataset.tab;
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.tab===activeTab);});
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.classList.toggle('on',t.dataset.tab===activeTab);
+    t.setAttribute('aria-selected',t.dataset.tab===activeTab?'true':'false');
+  });
   document.getElementById('finder-view').style.display=activeTab==='finder'?'':'none';
   document.getElementById('schedule-view').style.display=activeTab==='schedule'?'':'none';
   if(activeTab==='schedule') renderScheduleView();
@@ -464,7 +480,7 @@ document.querySelector('.tabs').addEventListener('click',function(e){
 document.body.addEventListener("click",function(e){
   const t=e.target.closest("[data-person],[data-day],[data-min],[data-tog],[data-act],.refresh");
   if(e.target.id==='sheet-load'){ const u=document.getElementById('sheet-url').value.trim(); if(u)loadSheetMeetings(u); return; }
-  if(e.target.id==='sheet-clear'){ SHEET_MEETINGS=null; sheetError=''; localStorage.removeItem('vbs_sheet_url'); if(DATA){DATA.meetings=SNAPSHOT.meetings; renderResults();} renderScheduleView(); return; }
+  if(e.target.id==='sheet-clear'){ if(!confirm('Disconnect the sheet and revert to the built-in schedule?'))return; SHEET_MEETINGS=null; sheetError=''; localStorage.removeItem('vbs_sheet_url'); if(DATA){DATA.meetings=SNAPSHOT.meetings; renderResults();} renderScheduleView(); return; }
   if(!t)return;
   if(t.id==="status"&&t.classList.contains("refresh")){ loadLive(); return; }
   if(t.dataset.person!=null){ const p=t.dataset.person; const i=state.selected.indexOf(p); if(i>=0)state.selected.splice(i,1); else state.selected.push(p); }
@@ -473,7 +489,7 @@ document.body.addEventListener("click",function(e){
   else if(t.dataset.tog!=null){ state[t.dataset.tog]=!state[t.dataset.tog]; }
   else if(t.dataset.act==="all"){ state.selected=DATA.people.slice(); }
   else if(t.dataset.act==="clear"){ state.selected=[]; }
-  renderControls(); renderResults();
+  saveState(); renderControls(); renderResults();
 });
 
 function renderAll(){ renderControls(); renderResults(); renderStatus(); renderFoot(); }
@@ -500,7 +516,8 @@ function loadLive(){
   document.body.appendChild(s);
 }
 
-// boot — show snapshot instantly, then upgrade to live if configured
+// boot — restore saved filter state, show snapshot instantly, then upgrade to live if configured
+loadState();
 useData(SNAPSHOT,"snapshot");
 loadLive();
 </script>
