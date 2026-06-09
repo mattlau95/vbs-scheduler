@@ -65,6 +65,40 @@
   .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px;}
   .warn{background:var(--claybg);border:1px solid #e8c9b0;border-radius:10px;padding:11px 14px;font-size:13px;color:#8a4a23;margin-top:14px;}
   .foot{color:var(--muted);font-size:11.5px;margin-top:18px;line-height:1.5;}
+  /* tabs */
+  .tabs{display:flex;border-bottom:2px solid var(--line);margin-top:20px;}
+  .tab{padding:10px 18px;font-size:14px;font-weight:500;cursor:pointer;border:none;background:none;
+    color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .12s;font-family:inherit;}
+  .tab.on{color:var(--ink);border-bottom-color:var(--free);}
+  .tab:hover:not(.on){color:var(--ink);}
+  /* schedule view */
+  .sched-item{display:flex;align-items:center;gap:16px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap;position:relative;}
+  .sched-item:first-of-type{border-top:none;}
+  .sched-item.past{opacity:.4;}
+  .sched-date{min-width:90px;}
+  .sched-dow{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14px;display:block;}
+  .sched-d{font-size:12px;color:var(--muted);display:block;margin-top:1px;}
+  .sched-info{flex:1;min-width:120px;}
+  .sched-lbl{font-weight:600;font-size:14px;display:block;}
+  .sched-loc{font-size:12px;color:var(--muted);margin-top:1px;display:block;}
+  .sched-time{font-size:13px;font-variant-numeric:tabular-nums;color:var(--free);font-weight:600;white-space:nowrap;}
+  .badge-next{font-size:10.5px;font-weight:700;background:var(--free);color:#fff;border-radius:999px;
+    padding:3px 9px;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;}
+  /* sheet connect */
+  .sheet-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+  .sheet-input{flex:1;min-width:200px;border:1px solid var(--line);border-radius:8px;padding:8px 12px;
+    font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff;outline:none;}
+  .sheet-input:focus{border-color:var(--free);}
+  .btn-primary{background:var(--free);color:#fff;border:none;border-radius:8px;padding:8px 16px;
+    font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-secondary{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px;
+    padding:8px 16px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+  .btn-secondary:hover{border-color:var(--muted);}
+  .sheet-hint{font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.5;}
+  .sheet-hint code{background:var(--page);padding:1px 4px;border-radius:4px;font-size:11.5px;}
+  .sheet-ok{font-size:12px;color:var(--free);font-weight:600;margin:6px 0 0;}
+  .sheet-err{font-size:12px;color:#c0392b;margin:6px 0 0;line-height:1.5;}
   @media(max-width:520px){.h1{font-size:22px;}.scale{font-size:8.5px;}}
 </style>
 </head>
@@ -77,9 +111,22 @@
     </div>
     <div id="status" class="status">Loading…</div>
   </div>
-  <div id="controls"></div>
-  <div id="results" class="card"><div class="empty">Loading…</div></div>
-  <p class="foot" id="foot"></p>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="finder">Find a Time</button>
+    <button class="tab" data-tab="schedule">Current Schedule</button>
+  </div>
+
+  <div id="finder-view">
+    <div id="controls"></div>
+    <div id="results" class="card"><div class="empty">Loading…</div></div>
+    <p class="foot" id="foot"></p>
+  </div>
+
+  <div id="schedule-view" style="display:none">
+    <div id="schedule-list" class="card"></div>
+    <div id="sheet-connect" class="card"></div>
+  </div>
 </div>
 
 <script>
@@ -87,17 +134,19 @@
    After deploying Code.gs, paste its /exec URL below. Leave ENDPOINT empty to
    run on the built-in snapshot only. TOKEN must match ACCESS_TOKEN in Code.gs
    (leave '' if you didn't set one). */
-const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxCZXht77lyQ2EdgsrIlRYYixAwUUHgYqjxCLva4dL8r9k1LuLixDAm74mydqyPLDcGCQ/exec';   // e.g. 'https://script.google.com/macros/s/AKfyc.../exec'
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbxCZXht77lyQ2EdgsrIlRYYixAwUUHgYqjxCLva4dL8r9k1LuLixDAm74mydqyPLDcGCQ/exec';
 const TOKEN    = '';
 /* ──────────────────────────────────────────────────────────────────────── */
 
-const SNAPSHOT = {"people":["Aidan","Alan","Eric","Joanna","Lucas","Matt Sun","Naomi","Nathaniel","Shiloh"],"slots":["10am-11am","11am-12pm","12pm-1pm","1pm-2pm","2pm-3pm","3pm-4pm","4pm-5pm","5pm-6pm","6pm-7pm","7pm-8pm","8pm-9pm","9pm-10pm"],"days":[{"date":"2026-05-31","dow":"Sunday"},{"date":"2026-06-02","dow":"Tuesday"},{"date":"2026-06-03","dow":"Wednesday"},{"date":"2026-06-04","dow":"Thursday"},{"date":"2026-06-07","dow":"Sunday"},{"date":"2026-06-09","dow":"Tuesday"},{"date":"2026-06-10","dow":"Wednesday"},{"date":"2026-06-11","dow":"Thursday"},{"date":"2026-06-12","dow":"Friday"},{"date":"2026-06-13","dow":"Saturday"},{"date":"2026-06-14","dow":"Sunday"},{"date":"2026-06-16","dow":"Tuesday"},{"date":"2026-06-17","dow":"Wednesday"},{"date":"2026-06-18","dow":"Thursday"},{"date":"2026-06-19","dow":"Friday"},{"date":"2026-06-20","dow":"Saturday"},{"date":"2026-06-21","dow":"Sunday"},{"date":"2026-06-22","dow":"Monday"},{"date":"2026-06-23","dow":"Tuesday"},{"date":"2026-06-24","dow":"Wednesday"},{"date":"2026-06-25","dow":"Thursday"},{"date":"2026-06-26","dow":"Friday"},{"date":"2026-06-27","dow":"Saturday"},{"date":"2026-06-28","dow":"Sunday"},{"date":"2026-06-29","dow":"Monday"},{"date":"2026-06-30","dow":"Tuesday"},{"date":"2026-07-01","dow":"Wednesday"},{"date":"2026-07-02","dow":"Thursday"},{"date":"2026-07-03","dow":"Friday"},{"date":"2026-07-04","dow":"Saturday"},{"date":"2026-07-05","dow":"Sunday"},{"date":"2026-07-06","dow":"Monday"},{"date":"2026-07-07","dow":"Tuesday"},{"date":"2026-07-08","dow":"Wednesday"},{"date":"2026-07-09","dow":"Thursday"},{"date":"2026-07-10","dow":"Friday"},{"date":"2026-07-11","dow":"Saturday"},{"date":"2026-07-12","dow":"Sunday"},{"date":"2026-07-13","dow":"Monday"},{"date":"2026-07-14","dow":"Tuesday"},{"date":"2026-07-15","dow":"Wednesday"},{"date":"2026-07-16","dow":"Thursday"},{"date":"2026-07-17","dow":"Friday"},{"date":"2026-07-18","dow":"Saturday"},{"date":"2026-07-19","dow":"Sunday"},{"date":"2026-07-20","dow":"Monday"},{"date":"2026-07-21","dow":"Tuesday"},{"date":"2026-07-22","dow":"Wednesday"},{"date":"2026-07-23","dow":"Thursday"},{"date":"2026-07-24","dow":"Friday"},{"date":"2026-07-25","dow":"Saturday"},{"date":"2026-07-26","dow":"Sunday"},{"date":"2026-07-27","dow":"Monday"},{"date":"2026-07-28","dow":"Tuesday"},{"date":"2026-07-29","dow":"Wednesday"},{"date":"2026-07-30","dow":"Thursday"},{"date":"2026-07-31","dow":"Friday"},{"date":"2026-08-01","dow":"Saturday"}],"avail":{"Aidan":["000000110000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111111","000000111111","000000000000","000000000000","000000111111","000000000000","000000111111","000000000000","000000000000","000000000011","000000000011","111011111111","111011111100","000000000000","000000111000","000000000000","111000000000","111000000010","111011111111","111011111100","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","000000111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000001110000","111000000000","111000000000","111000000000","111011111111","111011111100","000000111111","000000111111","111000000000","111000000011","111000000011","111011111111","111011111100","000010001111"],"Alan":["000000110000","000000000011","000000000000","000000000111","000001111111","000000000011","000000000000","000000000111","000000001100","000000111111","000000111111","000000000011","000000000000","000000000111","000000001100","000111111111","000000000000","000000000000","000000000011","000000000011","000000001111","000000001100","111111111111","000000000000","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000111000","000000000000","000000000011","000000000000","000000000111","000000001100","111111111111","000001110000","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111","000000001111","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111"],"Eric":["000000000000","000000000000","000000000000","000000000000","000001111111","000000000000","000000000000","000000000000","000000111100","000000000000","000000111111","000000000011","000000000011","000000111111","000000111100","000000000000","000000000000","000000000000","000000000011","000000000011","000011111111","000011111100","000000000000","000000111000","111000000000","111000000011","111000000011","111011111111","111011111100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000000000","001000000000","001000000011","001000000011","001011111111","001011111100","001111111011","000001110000","001000000000","001000000011","001000000011","001011111111","001011111100","001111111111","000000111111","000000000000","000000000011","000000000011","000011111111","000011111100","000000000000"],"Joanna":["000000000000","000000000000","000000000011","000000011111","000000000000","000000000011","000000000011","000000111111","000000111100","000000111111","000000111111","000000000011","000000000011","000000000000","000000111000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111000","111000000000","111000000011","111000000011","111011111111","111011111100","111111000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","111111111111","000000111000","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111","000001110000","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111","000000111111","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111"],"Lucas":["000000110000","000000000000","000000000000","000000011110","000001111110","000000000000","000000000000","000000000000","000000111100","000000000000","000000111100","000000000000","000000000000","000000111110","000000111100","000000000000","000000000000","111000000000","111000000000","111000000010","111011111110","111011110000","111111111110","000000111000","111000000000","111000000000","111000000010","111011111110","111011111100","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","111111111110","000000111000","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110","000001110000","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110","000000111110","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110"],"Matt Sun":["000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000010","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000"],"Naomi":["000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111100","000000000000","000000000000","000000000000","000000000000","000000000000","000111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000010","111000000000","111000000000","111111111100","000000000000","000000000000","000000000000","000000000000","000000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100"],"Nathaniel":["000000110000","000000000000","000000000000","000000000000","000001111100","000000000000","000000000000","000000000000","000000001100","000000111100","000000111100","000000000000","000000000000","000000000100","000000000100","000111111100","000000000000","000000000000","000000000000","111000000000","111000001100","111011111100","111111111100","000000111000","000000000000","111000000000","000000000000","000000000100","111000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111100","000000111000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000"],"Shiloh":["000000110000","000000000000","000000000011","000000000111","000001111111","000000000000","000000000011","000000000111","000000111100","000000111111","000000111111","000000000000","000000000011","000000000000","000000000000","000000000000","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111100000","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000111000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000111111","111000000000","111000000000","111000000011","111011000000","111011000000","000000000000"]},"meetings":[{"date":"2026-05-31","label":"Sunday Practice","loc":"Agape","startSlot":6,"endSlot":7},{"date":"2026-06-07","label":"Sunday Practice","loc":"Agape","startSlot":5,"endSlot":6},{"date":"2026-06-14","label":"Sunday Practice","loc":"Agape","startSlot":6,"endSlot":7},{"date":"2026-06-28","label":"Sunday Practice","loc":"","startSlot":6,"endSlot":7},{"date":"2026-07-12","label":"Sunday Practice","loc":"","startSlot":6,"endSlot":8},{"date":"2026-07-19","label":"Sunday Practice","loc":"","startSlot":5,"endSlot":7},{"date":"2026-07-24","label":"Friday Practice","loc":"","startSlot":6,"endSlot":8},{"date":"2026-07-26","label":"Sunday Practice","loc":"","startSlot":5,"endSlot":7},{"date":"2026-07-31","label":"Friday Practice","loc":"","startSlot":5,"endSlot":8},{"date":"2026-08-02","label":"Dry Run","loc":"Charis","startSlot":3,"endSlot":7}]};
+const SNAPSHOT = {"people":["Aidan","Alan","Eric","Joanna","Lucas","Naomi","Nathaniel","Shiloh"],"slots":["10am-11am","11am-12pm","12pm-1pm","1pm-2pm","2pm-3pm","3pm-4pm","4pm-5pm","5pm-6pm","6pm-7pm","7pm-8pm","8pm-9pm","9pm-10pm"],"days":[{"date":"2026-05-31","dow":"Sunday"},{"date":"2026-06-02","dow":"Tuesday"},{"date":"2026-06-03","dow":"Wednesday"},{"date":"2026-06-04","dow":"Thursday"},{"date":"2026-06-07","dow":"Sunday"},{"date":"2026-06-09","dow":"Tuesday"},{"date":"2026-06-10","dow":"Wednesday"},{"date":"2026-06-11","dow":"Thursday"},{"date":"2026-06-12","dow":"Friday"},{"date":"2026-06-13","dow":"Saturday"},{"date":"2026-06-14","dow":"Sunday"},{"date":"2026-06-16","dow":"Tuesday"},{"date":"2026-06-17","dow":"Wednesday"},{"date":"2026-06-18","dow":"Thursday"},{"date":"2026-06-19","dow":"Friday"},{"date":"2026-06-20","dow":"Saturday"},{"date":"2026-06-21","dow":"Sunday"},{"date":"2026-06-22","dow":"Monday"},{"date":"2026-06-23","dow":"Tuesday"},{"date":"2026-06-24","dow":"Wednesday"},{"date":"2026-06-25","dow":"Thursday"},{"date":"2026-06-26","dow":"Friday"},{"date":"2026-06-27","dow":"Saturday"},{"date":"2026-06-28","dow":"Sunday"},{"date":"2026-06-29","dow":"Monday"},{"date":"2026-06-30","dow":"Tuesday"},{"date":"2026-07-01","dow":"Wednesday"},{"date":"2026-07-02","dow":"Thursday"},{"date":"2026-07-03","dow":"Friday"},{"date":"2026-07-04","dow":"Saturday"},{"date":"2026-07-05","dow":"Sunday"},{"date":"2026-07-06","dow":"Monday"},{"date":"2026-07-07","dow":"Tuesday"},{"date":"2026-07-08","dow":"Wednesday"},{"date":"2026-07-09","dow":"Thursday"},{"date":"2026-07-10","dow":"Friday"},{"date":"2026-07-11","dow":"Saturday"},{"date":"2026-07-12","dow":"Sunday"},{"date":"2026-07-13","dow":"Monday"},{"date":"2026-07-14","dow":"Tuesday"},{"date":"2026-07-15","dow":"Wednesday"},{"date":"2026-07-16","dow":"Thursday"},{"date":"2026-07-17","dow":"Friday"},{"date":"2026-07-18","dow":"Saturday"},{"date":"2026-07-19","dow":"Sunday"},{"date":"2026-07-20","dow":"Monday"},{"date":"2026-07-21","dow":"Tuesday"},{"date":"2026-07-22","dow":"Wednesday"},{"date":"2026-07-23","dow":"Thursday"},{"date":"2026-07-24","dow":"Friday"},{"date":"2026-07-25","dow":"Saturday"},{"date":"2026-07-26","dow":"Sunday"},{"date":"2026-07-27","dow":"Monday"},{"date":"2026-07-28","dow":"Tuesday"},{"date":"2026-07-29","dow":"Wednesday"},{"date":"2026-07-30","dow":"Thursday"},{"date":"2026-07-31","dow":"Friday"},{"date":"2026-08-01","dow":"Saturday"}],"avail":{"Aidan":["000000110000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111111","000000111111","000000000000","000000000000","000000111111","000000000000","000000111111","000000000000","000000000000","000000000011","000000000011","111011111111","111011111100","000000000000","000000111000","000000000000","111000000000","111000000010","111011111111","111011111100","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","000000111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000001110000","111000000000","111000000000","111000000000","111011111111","111011111100","000000111111","000000111111","111000000000","111000000011","111000000011","111011111111","111011111100","000010001111"],"Alan":["000000110000","000000000011","000000000000","000000000111","000001111111","000000000011","000000000000","000000000111","000000001100","000000111111","000000111111","000000000011","000000000000","000000000111","000000001100","000111111111","000000000000","000000000000","000000000011","000000000011","000000001111","000000001100","111111111111","000000000000","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000111000","000000000000","000000000011","000000000000","000000000111","000000001100","111111111111","000001110000","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111","000000001111","000000000000","000000000011","000000000000","000000001111","000000001100","111111111111"],"Eric":["000000000000","000000000000","000000000000","000000000000","000001111111","000000000000","000000000000","000000000000","000000111100","000000000000","000000111111","000000000011","000000000011","000000111111","000000111100","000000000000","000000000000","000000000000","000000000011","000000000011","000011111111","000011111100","000000000000","000000111000","111000000000","111000000011","111000000011","111011111111","111011111100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000000000","001000000000","001000000011","001000000011","001011111111","001011111100","001111111011","000001110000","001000000000","001000000011","001000000011","001011111111","001011111100","001111111111","000000111111","000000000000","000000000011","000000000011","000011111111","000011111100","000000000000"],"Joanna":["000000000000","000000000000","000000000011","000000011111","000000000000","000000000011","000000000011","000000111111","000000111100","000000111111","000000111111","000000000011","000000000011","000000000000","000000111000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111000","111000000000","111000000011","111000000011","111011111111","111011111100","111111000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","111111111111","000000111000","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111","000001110000","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111","000000111111","000000000000","000000000000","000000000011","000000000000","111011111100","111111111111"],"Lucas":["000000110000","000000000000","000000000000","000000011110","000001111110","000000000000","000000000000","000000000000","000000111100","000000000000","000000111100","000000000000","000000000000","000000111110","000000111100","000000000000","000000000000","111000000000","111000000000","111000000010","111011111110","111011110000","111111111110","000000111000","111000000000","111000000000","111000000010","111011111110","111011111100","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111011111100","111111111110","000000111000","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110","000001110000","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110","000000111110","111000000000","111000000010","111000000010","111011111110","111011111100","111111111110"],"Naomi":["000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000111100","000000000000","000000000000","000000000000","000000000000","000000000000","000111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000010","111000000000","111000000000","111111111100","000000000000","000000000000","000000000000","000000000000","000000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100","000000000000","111000000000","111000000000","111000000000","111000000000","111000000000","111111111100"],"Nathaniel":["000000110000","000000000000","000000000000","000000000000","000001111100","000000000000","000000000000","000000000000","000000001100","000000111100","000000111100","000000000000","000000000000","000000000100","000000000100","000111111100","000000000000","000000000000","000000000000","111000000000","111000001100","111011111100","111111111100","000000111000","000000000000","111000000000","000000000000","000000000100","111000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111100","000000111000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000"],"Shiloh":["000000110000","000000000000","000000000011","000000000111","000001111111","000000000000","000000000011","000000000111","000000111100","000000111111","000000111111","000000000000","000000000011","000000000000","000000000000","000000000000","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111100000","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000000000","000000000000","000000000000","000000000000","000000000000","000000000000","111111111111","000000111000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000000000","111000000000","111000000000","111000000011","111011000000","111011111100","111111111111","000000111111","111000000000","111000000000","111000000011","111011000000","111011000000","000000000000"]},"meetings":[{"date":"2026-05-31","label":"Sunday Practice","loc":"Agape","startSlot":6,"endSlot":7},{"date":"2026-06-07","label":"Sunday Practice","loc":"Agape","startSlot":5,"endSlot":6},{"date":"2026-06-14","label":"Sunday Practice","loc":"Agape","startSlot":6,"endSlot":7},{"date":"2026-06-28","label":"Sunday Practice","loc":"","startSlot":6,"endSlot":7},{"date":"2026-07-12","label":"Sunday Practice","loc":"","startSlot":6,"endSlot":8},{"date":"2026-07-19","label":"Sunday Practice","loc":"","startSlot":5,"endSlot":7},{"date":"2026-07-24","label":"Friday Practice","loc":"","startSlot":6,"endSlot":8},{"date":"2026-07-26","label":"Sunday Practice","loc":"","startSlot":5,"endSlot":7},{"date":"2026-07-31","label":"Friday Practice","loc":"","startSlot":5,"endSlot":8},{"date":"2026-08-02","label":"Dry Run","loc":"Charis","startSlot":3,"endSlot":7}]};
 
 const SLOT_START=["10:00 AM","11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM","8:00 PM","9:00 PM"];
 const SLOT_END  =["11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM","8:00 PM","9:00 PM","10:00 PM"];
 const WEEK=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 let DATA=null, SOURCE="snapshot", GENERATED=null;
+let SHEET_MEETINGS=null, sheetLoading=false, sheetError='';
+let activeTab='finder';
 const state={ selected:["Alan","Eric"], minLen:2, hideClash:true, showNearMiss:false, days:WEEK.slice() };
 
 /* normalize either shape (snapshot arrays OR live date-keyed maps) to date->bits */
@@ -108,7 +157,7 @@ function normalize(raw){
     if(Array.isArray(a)){ const m={}; raw.days.forEach(function(d,i){ m[d.date]=a[i]; }); byDate[p]=m; }
     else byDate[p]=a||{};
   });
-  return { people:raw.people, days:raw.days, byDate:byDate, meetings:raw.meetings||SNAPSHOT.meetings };
+  return { people:raw.people, days:raw.days, byDate:byDate, meetings:SHEET_MEETINGS||raw.meetings||SNAPSHOT.meetings };
 }
 
 function bookedSet(date){ const m=DATA.meetings.find(function(x){return x.date===date;}); const s=new Set(); if(m) for(let i=m.startSlot;i<=m.endSlot;i++) s.add(i); return s; }
@@ -188,7 +237,7 @@ function renderResults(){
 
 function renderStatus(){
   const s=document.getElementById("status");
-  if(SOURCE==="live"){ const t=GENERATED?new Date(GENERATED):null; s.className="status live refresh"; s.textContent="● Live"+(t?" · "+t.toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):"")+" · refresh"; s.title="Click to re-read the folder"; }
+  if(SOURCE==="live"){ const t=GENERATED?new Date(GENERATED):null; s.className="status live refresh"; s.textContent="● Live"+(t?" · "+t.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):"")+" · refresh"; s.title="Click to re-read the folder"; }
   else { s.className="status snap"+(ENDPOINT?" refresh":""); s.textContent=ENDPOINT?"Saved snapshot · couldn't reach Google · retry":"Saved snapshot"; }
 }
 
@@ -199,10 +248,135 @@ function renderFoot(){
     "Any cell that wasn't a green check — including Church, SGL, holiday, and N/A blocks — counts as \"not free.\"";
 }
 
-function renderAll(){ renderControls(); renderResults(); renderStatus(); renderFoot(); }
+/* ─── Schedule view ─────────────────────────────────────────────────────── */
+
+function renderSchedule(){
+  const el=document.getElementById("schedule-list");
+  if(!el||!DATA) return;
+  const today=new Date().toISOString().slice(0,10);
+  const meetings=[].concat(DATA.meetings).sort(function(a,b){return a.date<b.date?-1:1;});
+  const nextIdx=meetings.findIndex(function(m){return m.date>=today;});
+  let html='<p class="label">Practice Schedule</p>';
+  if(!meetings.length){ html+='<div class="empty">No practices scheduled.</div>'; el.innerHTML=html; return; }
+  meetings.forEach(function(m,i){
+    const past=m.date<today;
+    const isNext=i===nextIdx;
+    const dayObj=DATA.days.find(function(d){return d.date===m.date;});
+    const dow=dayObj?dayObj.dow:(new Date(m.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'}));
+    html+='<div class="sched-item'+(past?' past':'')+'">'+
+      '<div class="sched-date"><span class="sched-dow">'+esc(dow)+'</span><span class="sched-d">'+fmtDate(m.date)+'</span></div>'+
+      '<div class="sched-info"><span class="sched-lbl">'+esc(m.label)+'</span>'+(m.loc?'<span class="sched-loc">'+esc(m.loc)+'</span>':'')+'</div>'+
+      '<div class="sched-time">'+SLOT_START[m.startSlot]+' – '+SLOT_END[m.endSlot]+'</div>'+
+      (isNext?'<span class="badge-next">Next</span>':'')+
+      '</div>';
+  });
+  el.innerHTML=html;
+}
+
+function renderSheetConnect(){
+  const el=document.getElementById("sheet-connect");
+  if(!el) return;
+  const savedUrl=localStorage.getItem('vbs_sheet_url')||'';
+  let html='<p class="label">Practice Schedule Source</p>'+
+    '<p style="font-size:13px;color:var(--muted);margin:0;">'+
+    'Connect a Google Sheet (published as CSV) to keep practices up to date without editing this file.</p>'+
+    '<div class="sheet-row">'+
+    '<input id="sheet-url" type="url" class="sheet-input" placeholder="Google Sheets CSV URL" value="'+esc(savedUrl)+'" />'+
+    '<button class="btn-primary" id="sheet-load">'+(sheetLoading?'Loading…':'Load')+'</button>'+
+    (SHEET_MEETINGS?'<button class="btn-secondary" id="sheet-clear">Use Snapshot</button>':'')+
+    '</div>'+
+    '<p class="sheet-hint">Publish your sheet via <strong>File › Share › Publish to web</strong> (choose CSV), then paste the URL above.<br>'+
+    'Expected columns: <code>date</code>, <code>label</code>, <code>location</code>, <code>start</code>, <code>end</code> — '+
+    'e.g. <code>2026-07-12, Sunday Practice, Agape, 4pm, 6pm</code></p>';
+  if(SHEET_MEETINGS) html+='<p class="sheet-ok">● Using '+SHEET_MEETINGS.length+' practice'+(SHEET_MEETINGS.length===1?'':'s')+' from connected sheet</p>';
+  else if(!sheetError) html+='<p style="font-size:12px;color:var(--muted);margin:6px 0 0;">Currently using the built-in snapshot schedule.</p>';
+  if(sheetError) html+='<p class="sheet-err">'+esc(sheetError)+'</p>';
+  el.innerHTML=html;
+}
+
+function renderScheduleView(){
+  renderSchedule();
+  renderSheetConnect();
+}
+
+/* ─── Google Sheet CSV loading ──────────────────────────────────────────── */
+
+function normalizeSheetUrl(url){
+  const idM=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  if(!idM) return url;
+  const id=idM[1];
+  const gidM=url.match(/[?&]gid=(\d+)/);
+  const gid=gidM?gidM[1]:'0';
+  return 'https://docs.google.com/spreadsheets/d/'+id+'/export?format=csv&gid='+gid;
+}
+
+function timeToSlot(t){
+  if(!t) return -1;
+  t=t.toString().trim().toLowerCase().replace(/\s+/g,'');
+  const m=t.match(/^(\d+)(?::(\d+))?(am|pm)?$/);
+  if(!m) return -1;
+  let h=parseInt(m[1]);
+  if(m[3]==='pm'&&h<12) h+=12;
+  if(m[3]==='am'&&h===12) h=0;
+  if(!m[3]&&h<=9) h+=12; // treat bare 1–9 as PM
+  return h-10; // 10am→0, 9pm→11
+}
+
+function parseSheetCSV(text){
+  const lines=text.replace(/\r/g,'').trim().split('\n');
+  if(lines.length<2) return [];
+  const headers=lines[0].split(',').map(function(h){return h.trim().replace(/^"|"$/g,'').toLowerCase();});
+  const meetings=[];
+  for(let i=1;i<lines.length;i++){
+    const cols=lines[i].split(',').map(function(c){return c.trim().replace(/^"|"$/g,'');});
+    const row={};
+    headers.forEach(function(h,j){row[h]=cols[j]||'';});
+    if(!row.date) continue;
+    const start=timeToSlot(row.start||row['start time']||row['start slot']);
+    const end=timeToSlot(row.end||row['end time']||row['end slot']);
+    if(start<0||start>11||end<0||end>11) continue;
+    meetings.push({date:row.date,label:row.label||row.name||'Practice',loc:row.location||row.loc||'',startSlot:start,endSlot:end});
+  }
+  return meetings;
+}
+
+function loadSheetMeetings(url){
+  sheetLoading=true; sheetError='';
+  renderSheetConnect();
+  fetch(normalizeSheetUrl(url))
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status); return r.text();})
+    .then(function(text){
+      const meetings=parseSheetCSV(text);
+      if(!meetings.length) throw new Error('No valid rows found. Check column headers: date, label, location, start, end');
+      SHEET_MEETINGS=meetings;
+      localStorage.setItem('vbs_sheet_url',url);
+      if(DATA){DATA.meetings=SHEET_MEETINGS; renderResults();}
+      sheetLoading=false;
+      renderScheduleView();
+    })
+    .catch(function(err){
+      sheetLoading=false;
+      sheetError='Could not load sheet: '+err.message+'. Make sure the sheet is published to the web (File › Share › Publish to web, CSV format).';
+      renderSheetConnect();
+    });
+}
+
+/* ─── Event handling ────────────────────────────────────────────────────── */
+
+document.querySelector('.tabs').addEventListener('click',function(e){
+  const tab=e.target.closest('[data-tab]');
+  if(!tab) return;
+  activeTab=tab.dataset.tab;
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.tab===activeTab);});
+  document.getElementById('finder-view').style.display=activeTab==='finder'?'':'none';
+  document.getElementById('schedule-view').style.display=activeTab==='schedule'?'':'none';
+  if(activeTab==='schedule') renderScheduleView();
+});
 
 document.body.addEventListener("click",function(e){
   const t=e.target.closest("[data-person],[data-day],[data-min],[data-tog],[data-act],.refresh");
+  if(e.target.id==='sheet-load'){ const u=document.getElementById('sheet-url').value.trim(); if(u)loadSheetMeetings(u); return; }
+  if(e.target.id==='sheet-clear'){ SHEET_MEETINGS=null; sheetError=''; localStorage.removeItem('vbs_sheet_url'); if(DATA){DATA.meetings=SNAPSHOT.meetings; renderResults();} renderScheduleView(); return; }
   if(!t)return;
   if(t.id==="status"&&t.classList.contains("refresh")){ loadLive(); return; }
   if(t.dataset.person!=null){ const p=t.dataset.person; const i=state.selected.indexOf(p); if(i>=0)state.selected.splice(i,1); else state.selected.push(p); }
@@ -214,7 +388,14 @@ document.body.addEventListener("click",function(e){
   renderControls(); renderResults();
 });
 
-function useData(raw,source){ DATA=normalize(raw); SOURCE=source; GENERATED=raw.generated||null; renderAll(); }
+function renderAll(){ renderControls(); renderResults(); renderStatus(); renderFoot(); }
+
+function useData(raw,source){
+  DATA=normalize(raw); SOURCE=source; GENERATED=raw.generated||null;
+  renderAll();
+  const savedUrl=localStorage.getItem('vbs_sheet_url');
+  if(savedUrl&&!SHEET_MEETINGS) loadSheetMeetings(savedUrl);
+}
 
 function loadLive(){
   if(!ENDPOINT){ useData(SNAPSHOT,"snapshot"); return; }
@@ -222,7 +403,7 @@ function loadLive(){
   const s=document.createElement("script");
   let done=false;
   function cleanup(){ clearTimeout(timer); try{delete window[fn];}catch(_){window[fn]=undefined;} if(s.parentNode)s.parentNode.removeChild(s); }
-  const timer=setTimeout(function(){ if(done)return; done=true; cleanup(); useData(SNAPSHOT,"snapshot"); }, 9000);
+  const timer=setTimeout(function(){ if(done)return; done=true; cleanup(); useData(SNAPSHOT,"snapshot"); },9000);
   window[fn]=function(d){ if(done)return; done=true; cleanup(); if(d&&!d.error&&d.people){ useData(d,"live"); } else { useData(SNAPSHOT,"snapshot"); } };
   let url=ENDPOINT+(ENDPOINT.indexOf("?")>=0?"&":"?")+"callback="+fn;
   if(TOKEN) url+="&token="+encodeURIComponent(TOKEN);
