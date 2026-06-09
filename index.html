@@ -153,6 +153,9 @@ const SLOT_END  =["11:00 AM","12:00 PM","1:00 PM","2:00 PM","3:00 PM","4:00 PM",
 const WEEK=["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 let DATA=null, SOURCE="snapshot", GENERATED=null;
+const CACHE_KEY='vbs_live_cache';
+function saveCache(raw){ try{localStorage.setItem(CACHE_KEY,JSON.stringify(raw));}catch(_){} }
+function loadCache(){ try{const s=localStorage.getItem(CACHE_KEY);return s?JSON.parse(s):null;}catch(_){return null;} }
 let SHEET_MEETINGS=null, sheetLoading=false, sheetError='';
 let activeTab='finder';
 const state={ selected:["Alan","Eric"], minLen:2, hideClash:true, showNearMiss:false, days:WEEK.slice() };
@@ -245,15 +248,18 @@ function renderResults(){
 
 function renderStatus(){
   const s=document.getElementById("status");
-  if(SOURCE==="live"){ const t=GENERATED?new Date(GENERATED):null; s.className="status live refresh"; s.textContent="● Live"+(t?" · "+t.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):"")+" · refresh"; s.title="Click to re-read the folder"; }
-  else { s.className="status snap"+(ENDPOINT?" refresh":""); s.textContent=ENDPOINT?"Saved snapshot · couldn't reach Google · retry":"Saved snapshot"; }
+  const t=GENERATED?new Date(GENERATED):null;
+  const ts=t?" · "+t.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):"";
+  if(SOURCE==="live"){ s.className="status live refresh"; s.textContent="● Live"+ts+" · refresh"; s.title="Click to re-read the folder"; }
+  else if(SOURCE==="cached"){ s.className="status snap"+(ENDPOINT?" refresh":""); s.textContent="Cached"+ts+(ENDPOINT?" · retry":""); s.title="Showing last successful sync. Click to retry."; }
+  else { s.className="status snap"+(ENDPOINT?" refresh":""); s.textContent=ENDPOINT?"Saved snapshot · couldn't reach Google · retry":"Saved snapshot"; s.title=""; }
 }
 
 function renderFoot(){
-  document.getElementById("foot").innerHTML = (SOURCE==="live"
-    ? "Reading availability live from your Drive folder. "
-    : "Showing the built-in snapshot (May 31 – Aug 1). ")+
-    "Any cell that wasn't a green check — including Church, SGL, holiday, and N/A blocks — counts as \"not free.\"";
+  const msg=SOURCE==="live"?"Reading availability live from your Drive folder. "
+    :SOURCE==="cached"?"Showing cached data from your last successful sync. "
+    :"Showing the built-in snapshot (May 31 – Aug 1). ";
+  document.getElementById("foot").innerHTML=msg+"Any cell that wasn't a green check — including Church, SGL, holiday, and N/A blocks — counts as \"not free.\"";
 }
 
 /* ─── Schedule view ─────────────────────────────────────────────────────── */
@@ -485,11 +491,12 @@ function loadLive(){
   const s=document.createElement("script");
   let done=false;
   function cleanup(){ clearTimeout(timer); try{delete window[fn];}catch(_){window[fn]=undefined;} if(s.parentNode)s.parentNode.removeChild(s); }
-  const timer=setTimeout(function(){ if(done)return; done=true; cleanup(); useData(SNAPSHOT,"snapshot"); },9000);
-  window[fn]=function(d){ if(done)return; done=true; cleanup(); if(d&&!d.error&&d.people){ useData(d,"live"); } else { useData(SNAPSHOT,"snapshot"); } };
+  function fallback(){ const c=loadCache(); useData(c||SNAPSHOT,c?"cached":"snapshot"); }
+  const timer=setTimeout(function(){ if(done)return; done=true; cleanup(); fallback(); },9000);
+  window[fn]=function(d){ if(done)return; done=true; cleanup(); if(d&&!d.error&&d.people){ saveCache(d); useData(d,"live"); } else { fallback(); } };
   let url=ENDPOINT+(ENDPOINT.indexOf("?")>=0?"&":"?")+"callback="+fn;
   if(TOKEN) url+="&token="+encodeURIComponent(TOKEN);
-  s.src=url; s.onerror=function(){ if(done)return; done=true; cleanup(); useData(SNAPSHOT,"snapshot"); };
+  s.src=url; s.onerror=function(){ if(done)return; done=true; cleanup(); fallback(); };
   document.body.appendChild(s);
 }
 
