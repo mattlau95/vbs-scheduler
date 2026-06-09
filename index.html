@@ -325,19 +325,47 @@ function timeToSlot(t){
   return h-10; // 10am→0, 9pm→11
 }
 
+function parseCSVRow(line){
+  const cols=[]; let cur='', inQ=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){ inQ=!inQ; }
+    else if(ch===','&&!inQ){ cols.push(cur.trim()); cur=''; }
+    else cur+=ch;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
+function parseDateStr(s){
+  s=s.trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const MONTHS={january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
+  const parts=s.replace(/,/g,' ').trim().split(/\s+/);
+  let month=-1, day=-1;
+  parts.forEach(function(p){
+    const mn=MONTHS[p.toLowerCase()];
+    if(mn) month=mn;
+    const dn=parseInt(p);
+    if(!isNaN(dn)&&dn>=1&&dn<=31) day=dn;
+  });
+  if(month<0||day<0) return '';
+  return '2026-'+String(month).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+}
+
 function parseSheetCSV(text){
   const lines=text.replace(/\r/g,'').trim().split('\n');
   if(lines.length<2) return {meetings:[],headers:[]};
-  const headers=lines[0].split(',').map(function(h){return h.trim().replace(/^"|"$/g,'').toLowerCase();});
+  const headers=parseCSVRow(lines[0]).map(function(h){return h.toLowerCase();});
   const meetings=[];
   for(let i=1;i<lines.length;i++){
-    const cols=lines[i].split(',').map(function(c){return c.trim().replace(/^"|"$/g,'');});
+    const cols=parseCSVRow(lines[i]);
     const row={};
     headers.forEach(function(h,j){row[h]=cols[j]||'';});
-    // flexible date key matching
-    const dateVal=row.date||row['practice date']||row['day']||'';
+    const rawDate=row.date||row['practice date']||row['day']||'';
+    if(!rawDate) continue;
+    const dateVal=parseDateStr(rawDate);
     if(!dateVal) continue;
-    // flexible start/end key matching
     const startRaw=row.start||row['start time']||row['start slot']||row['begins']||row['from']||'';
     const endRaw=row.end||row['end time']||row['end slot']||row['ends']||row['to']||'';
     const start=timeToSlot(startRaw);
