@@ -24,6 +24,8 @@
   .status.live{color:#1c5638;background:var(--freebg);border-color:#bfe0cd;}
   .status.snap{color:#8a6a23;background:#f6efda;border-color:#e6dcb8;}
   .status.refresh{cursor:pointer;}
+  .status.loading{color:#666;background:#f3f3f3;border-color:#ddd;cursor:default;animation:status-pulse 1s ease-in-out infinite;}
+  @keyframes status-pulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:16px;}
   .label{font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.04em;
     text-transform:uppercase;color:var(--muted);margin:0 0 10px;}
@@ -505,6 +507,8 @@ function useData(raw,source){
 
 function loadLive(){
   if(!ENDPOINT){ useData(SNAPSHOT,"snapshot"); return; }
+  const sb=document.getElementById("status");
+  if(sb){ sb.className="status loading"; sb.textContent="Fetching…"; }
   const fn="__vbs_cb_"+Date.now();
   const s=document.createElement("script");
   let done=false;
