@@ -28,6 +28,38 @@ The CSV parser handles:
 
 ---
 
+---
+
+## June 9, 2026 (continued) — UX Audit
+
+Ran a full UX audit against the live site using a personal audit runbook (`ux-audit-kit/AUDIT.md`) with axe-core, pa11y, and Lighthouse.
+
+Found **24 accessibility violations and 12 actionable findings** across contrast, ARIA, landmarks, performance, and UX patterns. All 12 were quick wins — fixed in the same session, logged as MAT-204–215 in Linear.
+
+**Estimated time saved by running this through Claude Code vs. manually:**
+
+| Task | Manual | With skill |
+|------|--------|------------|
+| Running tools + parsing output | ~45 min | ~3 min |
+| Mapping findings to checklist, triaging severity | ~1 hr | ~5 min |
+| Writing structured audit report | ~30 min | included |
+| Creating 12 Linear issues with evidence + fix descriptions | ~45 min | ~2 min |
+| **Total** | **~3 hrs** | **~10 min** |
+
+The main leverage is the structured report and issue creation — those are the parts that normally feel like paperwork and get skipped.
+
+---
+
+## June 10, 2026
+
+**Filter Matt Sun from all data sources**
+Matt Sun was still showing up in the "Who needs to be there" chips and the "Can make it / Can't make it" lists in Current Schedule because those pull from the live Google Apps Script endpoint, not the snapshot. Added a client-side `EXCLUDED_PEOPLE` list that filters at the `normalize()` layer — before data ever reaches `DATA.people` — so he's gone regardless of which source (live, cached, or snapshot) is active.
+
+**Retry loading indicator**
+Clicking the status pill to retry a live fetch now immediately switches it to a grey pulsing "Fetching…" state. Previously it was silent. The pill snaps back to Live / Cached / Snapshot once the request resolves (or the 9s timeout fires).
+
+---
+
 ### What's next
 
 - Blog post outline covering the build (form → script → scheduler pipeline)
