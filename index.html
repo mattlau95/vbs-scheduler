@@ -172,15 +172,17 @@ const STATE_KEY='vbs_state';
 function saveState(){ try{localStorage.setItem(STATE_KEY,JSON.stringify(state));}catch(_){} }
 function loadState(){ try{ const o=JSON.parse(localStorage.getItem(STATE_KEY)||'null'); if(!o)return; if(Array.isArray(o.selected))state.selected=o.selected; if(typeof o.minLen==='number')state.minLen=o.minLen; if(typeof o.hideClash==='boolean')state.hideClash=o.hideClash; if(typeof o.showNearMiss==='boolean')state.showNearMiss=o.showNearMiss; if(Array.isArray(o.days))state.days=o.days; }catch(_){} }
 
+const EXCLUDED_PEOPLE=["Matt Sun"];
 /* normalize either shape (snapshot arrays OR live date-keyed maps) to date->bits */
 function normalize(raw){
+  const people=raw.people.filter(function(p){ return EXCLUDED_PEOPLE.indexOf(p)<0; });
   const byDate={};
-  raw.people.forEach(function(p){
+  people.forEach(function(p){
     const a=raw.avail[p];
     if(Array.isArray(a)){ const m={}; raw.days.forEach(function(d,i){ m[d.date]=a[i]; }); byDate[p]=m; }
     else byDate[p]=a||{};
   });
-  return { people:raw.people, days:raw.days, byDate:byDate, meetings:SHEET_MEETINGS||raw.meetings||SNAPSHOT.meetings };
+  return { people:people, days:raw.days, byDate:byDate, meetings:SHEET_MEETINGS||raw.meetings||SNAPSHOT.meetings };
 }
 
 function bookedSet(date){ const m=DATA.meetings.find(function(x){return x.date===date;}); const s=new Set(); if(m) for(let i=m.startSlot;i<=m.endSlot;i++) s.add(i); return s; }
